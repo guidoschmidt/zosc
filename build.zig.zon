@@ -1,0 +1,13 @@
+.{
+    .name = "zosc",
+    .version = "0.0.1",
+    .dependencies = .{
+        .network = .{
+            .url = "https://github.com/MasterQ32/zig-network/archive/e734600daa590ab39d7bb76a5a5054b6efd1f126.tar.gz",
+            .hash = "122033fba45ac83a780b1db316526158794a7dc184138a57a001a2db0aaa81b9e18c",
+        },
+    },
+    .paths = .{
+        "",
+    },
+}

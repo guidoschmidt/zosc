@@ -1,4 +1,4 @@
-# Open Sound Control package for [zig](https://ziglang.org/)
+# OSC Open Sound Control package for [zig](https://ziglang.org/)
 
 ### Features
 - [x] OSC Messages
@@ -14,3 +14,6 @@
   `/ch/1`
 - Open [`vcv/receive-osc.vcv`](./vcv) in [VCV Rack 2](https://vcvrack.com/Rack)
   to receive messages from `zig build client`
+
+### Links & References
+- [OSC Specifications](https://opensoundcontrol.stanford.edu/)

@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const network_module = b.dependency("network", .{}).module("network");
 
-    const osc_module = b.addModule("osc", .{
+    const zosc_module = b.addModule("osc", .{
         .root_source_file = .{ .path = "src/lib.zig" },
         .imports = &.{
             .{ .name = "network", .module = network_module },
@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         });
 
-        exe.root_module.addImport("osc", osc_module);
+        exe.root_module.addImport("osc", zosc_module);
 
         b.installArtifact(exe);
         const run_cmd = b.addRunArtifact(exe);
@@ -44,7 +44,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         });
 
-        exe.root_module.addImport("osc", osc_module);
+        exe.root_module.addImport("osc", zosc_module);
 
         b.installArtifact(exe);
         const run_cmd = b.addRunArtifact(exe);

@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const network_module = b.dependency("network", .{}).module("network");
 
-    const zosc_module = b.addModule("osc", .{
+    const zosc_module = b.addModule("zosc", .{
         .root_source_file = .{ .path = "src/lib.zig" },
         .imports = &.{
             .{ .name = "network", .module = network_module },

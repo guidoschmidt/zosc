@@ -10,6 +10,7 @@ const Self = @This();
 port: u16 = 7777,
 socket: network.Socket = undefined,
 comptime buffer_size: u32 = 4096,
+on_receive: *const fn(*const OscMessage) void = undefined,
 
 pub fn init(self: *Self) !void {
     self.socket = try network.Socket.create(.ipv4, .udp);
@@ -30,8 +31,9 @@ pub fn serve(self: *Self, allocator: Allocator) !void {
     while(true) {
         const bytes = try reader.read(buffer[0..buffer.len]);
         if (bytes > 0) {
-            const osc_msg = OscMessage.decode(buffer[0..bytes], allocator);
-            std.debug.print("{any}", .{ osc_msg });
+            const osc_msg = try OscMessage.decode(buffer[0..bytes], allocator);
+            if (self.on_receive != undefined)
+                self.on_receive(&osc_msg);
         }
     }
 }

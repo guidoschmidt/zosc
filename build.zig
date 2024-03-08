@@ -1,13 +1,5 @@
 const std = @import("std");
 
-//  pub fn addExample(b: *std.Build,
-//                   target: std.Build.ResolvedTarget,
-//                   optimize: std.builtin.OptimizeMode,
-//                    comptime name: []const u8,
-//                    comptime src_file: []const u8,
-//                    osc_module: *std.Build.Module) void {
-// }
-
 pub fn build(b: *std.Build) void {
     const network_module = b.dependency("network", .{}).module("network");
 
@@ -71,9 +63,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize
     });
-    //tests.addModule("", module_name);
     const run_tests = b.addRunArtifact(tests);
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_tests.step);
-
 }

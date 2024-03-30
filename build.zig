@@ -10,7 +10,6 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-
     // Examples
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -18,7 +17,7 @@ pub fn build(b: *std.Build) void {
     {
         const exe = b.addExecutable(.{
             .name = "server",
-            .root_source_file = .{ .path = "./src/example_server.zig" },
+            .root_source_file = .{ .path = "./src/examples/server.zig" },
             .target = target,
             .optimize = optimize,
         });
@@ -32,14 +31,14 @@ pub fn build(b: *std.Build) void {
             run_cmd.addArgs(args);
         }
 
-        const run_step = b.step("server", "Run example server");
+        const run_step = b.step("examples/server", "Run example server");
         run_step.dependOn(&run_cmd.step);
-     }
+    }
 
     {
         const exe = b.addExecutable(.{
             .name = "client",
-            .root_source_file = .{ .path = "./src/example_client.zig" },
+            .root_source_file = .{ .path = "./src/examples/client.zig" },
             .target = target,
             .optimize = optimize,
         });
@@ -53,16 +52,12 @@ pub fn build(b: *std.Build) void {
             run_cmd.addArgs(args);
         }
 
-        const run_step = b.step("client", "Run example server");
+        const run_step = b.step("examples/client", "Run example server");
         run_step.dependOn(&run_cmd.step);
     }
 
     // Tests
-    const tests = b.addTest(.{
-        .root_source_file = .{ .path = "./src/testing.zig" },
-        .target = target,
-        .optimize = optimize
-    });
+    const tests = b.addTest(.{ .root_source_file = .{ .path = "./src/testing.zig" }, .target = target, .optimize = optimize });
     const run_tests = b.addRunArtifact(tests);
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_tests.step);

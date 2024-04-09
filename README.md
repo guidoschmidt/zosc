@@ -1,6 +1,7 @@
 [![CI](https://github.com/guidoschmidt/zosc/actions/workflows/build.yml/badge.svg)](https://github.com/guidoschmidt/zosc/actions/workflows/build.yml)
 
-# OSC Open Sound Control package for [zig](https://ziglang.org/)
+# zosc
+### Open Sound Control package for [zig](https://ziglang.org/)
 
 Target zig version: `0.12.0-dev.2063+804cee3b9`
 

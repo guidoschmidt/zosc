@@ -1,11 +1,10 @@
 const std = @import("std");
 const network = @import("network");
+const Allocator = std.mem.Allocator;
 
 const OscMessage = @import("./OscMessage.zig");
 
-const Allocator = std.mem.Allocator;
-
-const Self = @This();
+const OscServer = @This();
 
 port: u16 = 7777,
 socket: network.Socket = undefined,
@@ -13,7 +12,7 @@ comptime buffer_size: u32 = 4096,
 on_receive: *const fn(*const OscMessage) void = undefined,
 active: bool = true,
 
-pub fn init(self: *Self) !void {
+pub fn init(self: *OscServer) !void {
     self.socket = try network.Socket.create(.ipv4, .udp);
     try self.socket.enablePortReuse(true);
     const incoming_endpoint = network.EndPoint{
@@ -25,7 +24,7 @@ pub fn init(self: *Self) !void {
     };
 }
 
-pub fn serve(self: *Self, allocator: Allocator) !void {
+pub fn serve(self: *OscServer, allocator: Allocator) !void {
     std.log.info("\n[OscServer] Serving on port {}", .{ self.port });
     var reader = self.socket.reader();
     var buffer: [self.buffer_size]u8 = undefined;
@@ -44,6 +43,6 @@ pub fn serve(self: *Self, allocator: Allocator) !void {
     }
 }
 
-pub fn kill(self: *Self) void {
+pub fn kill(self: *OscServer) void {
     self.active = false;
 }

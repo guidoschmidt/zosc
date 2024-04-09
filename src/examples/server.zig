@@ -4,9 +4,9 @@ const osc = @import("osc");
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 const allocator = gpa.allocator();
 
-var server: osc.OscServer = undefined;
+var server: osc.Server = undefined;
 
-fn onOscReceive(msg: *const osc.OscMessage) void {
+fn onOscReceive(msg: *const osc.Message) void {
     std.debug.print("\n{any}", .{ msg });
     server.kill();
 }
@@ -15,7 +15,7 @@ pub fn main() !void {
     try osc.init();
     defer osc.deinit();
 
-    server = osc.OscServer{
+    server = osc.Server{
         .port = 7001,
         .on_receive = onOscReceive,
     };

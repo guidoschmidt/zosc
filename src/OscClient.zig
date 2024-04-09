@@ -3,14 +3,14 @@ const network = @import("network");
 
 const OscMessage = @import("./OscMessage.zig");
 
-const Self = @This();
+const OscClient = @This();
 
 port: u16 = undefined,
 address: network.Address = undefined,
 socket: network.Socket = undefined,
 send_to_endpoint: network.EndPoint = undefined,
 
-pub fn connect(self: *Self) !void {
+pub fn connect(self: *OscClient) !void {
     self.address = network.Address{
         .ipv4 = network.Address.IPv4.any
     };
@@ -30,11 +30,11 @@ pub fn connect(self: *Self) !void {
     try self.socket.bind(bind_address);
 }
 
-pub fn close(self: *Self) void {
+pub fn close(self: *OscClient) void {
     self.socket.close();
 }
 
-pub fn sendMessage(self: *Self,
+pub fn sendMessage(self: *OscClient,
                    osc_message: OscMessage,
                    allocator: std.mem.Allocator) !void {
     const buffer = try osc_message.encode(allocator);

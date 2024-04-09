@@ -8,7 +8,7 @@ pub fn main() !void {
     try osc.init();
     defer osc.deinit();
 
-    var client = osc.OscClient{
+    var client = osc.Client{
         .port = 7001,
     };
     try client.connect();
@@ -16,9 +16,9 @@ pub fn main() !void {
     var i: usize = 0;
     while(i < 300) {
 
-        const msg = osc.OscMessage{
+        const msg = osc.Message{
             .address = "/ch/1",
-            .arguments = &[_]osc.OscArgument{
+            .arguments = &[_]osc.Argument{
                 .{ .f = std.math.sin(@as(f32, @floatFromInt(i)) * 0.1) * 3.0 }
             }
         };

@@ -55,17 +55,17 @@ pub const OscArgument = union(OscArgumentType) {
     }
 };
 
-const Self = @This();
+const OscMessage = @This();
 
 address: []const u8,
 type_tag: OscTypeTag = .i32,
 arguments: []const OscArgument = undefined,
 
-pub fn addArguments(self: *Self, arguments: []const OscArgument) void {
+pub fn addArguments(self: *OscMessage, arguments: []const OscArgument) void {
     self.arguments = arguments;
 }
 
-pub fn format(self: Self,
+pub fn format(self: OscMessage,
               comptime fmt: []const u8,
               options: std.fmt.FormatOptions,
               writer: anytype) !void {
@@ -77,7 +77,7 @@ pub fn format(self: Self,
     }
 }
 
-pub fn encode(self: *const Self, allocator: std.mem.Allocator) ![]u8 {
+pub fn encode(self: *const OscMessage, allocator: std.mem.Allocator) ![]u8 {
     var size = self.address.len;
     var fill = try std.math.mod(usize, size, 4);
     size += 4 - fill;
@@ -122,7 +122,7 @@ pub fn encode(self: *const Self, allocator: std.mem.Allocator) ![]u8 {
     return buffer;
 }
 
-pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !Self {
+pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !OscMessage {
     var stream = std.io.fixedBufferStream(buffer);
     var reader = stream.reader();
 
@@ -172,12 +172,12 @@ pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !Self {
             else => @panic("Not yet implemented"),
         }
     }
-    return Self{
+    return OscMessage{
         .address = address,
         .arguments = try allocator.dupe(OscArgument, arguments.items),
     };
 }
 
-pub fn free(self: *const Self, allocator: std.mem.Allocator) void {
+pub fn free(self: *const OscMessage, allocator: std.mem.Allocator) void {
     allocator.free(self.arguments);
 }

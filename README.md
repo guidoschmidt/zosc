@@ -3,7 +3,7 @@
 # zosc
 ### Open Sound Control package for [zig](https://ziglang.org/)
 
-Target zig version: `0.12.0-dev.2063+804cee3b9`
+Target zig version: `0.12.0`
 
 ### Features
 - [x] OSC Messages

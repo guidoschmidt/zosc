@@ -14,8 +14,8 @@ Target zig version: `0.12.0-dev.2063+804cee3b9`
   - [ ] OSC-blob
 
 ### Examples
-- `zig build server` to run an [OSC server example](src/examples/server.zig)
-- `zig build client` to run an [OSC client example](src/examples/client.zig), which sends a sine wave as OSC message to
+- `zig build exapmles/server` to run an [OSC server example](src/examples/server.zig)
+- `zig build exapmles/client` to run an [OSC client example](src/examples/client.zig), which sends a sine wave as OSC message to
   `/ch/1`
 - Open [`vcv/receive-osc.vcv`](./vcv) in [VCV Rack 2](https://vcvrack.com/Rack)
   to receive messages from `zig build client`

@@ -24,7 +24,7 @@ pub fn connect(self: *OscClient) !void {
     };
 
     self.send_to_endpoint = network.EndPoint {
-        .address = network.Address{ .ipv4 = network.Address.IPv4.multicast_all },
+        .address = network.Address{ .ipv4 = network.Address.IPv4.broadcast },
         .port = self.port,
     };
     try self.socket.bind(bind_address);

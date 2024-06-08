@@ -3,9 +3,6 @@ const osc = @import("osc");
 
 pub const io_mode = .evented;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-
 var server: osc.Server = undefined;
 
 fn onOscReceive(msg: *const osc.Message) void {
@@ -14,6 +11,10 @@ fn onOscReceive(msg: *const osc.Message) void {
 }
 
 pub fn main() !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
     try osc.init();
     defer osc.deinit();
 

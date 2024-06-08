@@ -1,10 +1,11 @@
 const std = @import("std");
 const osc = @import("osc");
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-
 pub fn main() !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
     try osc.init();
     defer osc.deinit();
 

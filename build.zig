@@ -4,7 +4,7 @@ pub fn build(b: *std.Build) void {
     const network_module = b.dependency("network", .{}).module("network");
 
     const zosc_module = b.addModule("zosc", .{
-        .root_source_file = .{ .path = "src/lib.zig" },
+        .root_source_file = b.path("src/lib.zig"),
         .imports = &.{
             .{ .name = "network", .module = network_module },
         },
@@ -17,7 +17,7 @@ pub fn build(b: *std.Build) void {
     {
         const exe = b.addExecutable(.{
             .name = "server",
-            .root_source_file = .{ .path = "./src/examples/server.zig" },
+            .root_source_file = b.path("./src/examples/server.zig"),
             .target = target,
             .optimize = optimize,
         });
@@ -31,14 +31,14 @@ pub fn build(b: *std.Build) void {
             run_cmd.addArgs(args);
         }
 
-        const run_step = b.step("examples/server", "Run example server");
+        const run_step = b.step("examples-server", "Run example server");
         run_step.dependOn(&run_cmd.step);
     }
 
     {
         const exe = b.addExecutable(.{
             .name = "client",
-            .root_source_file = .{ .path = "./src/examples/client.zig" },
+            .root_source_file = b.path("./src/examples/client.zig"),
             .target = target,
             .optimize = optimize,
         });
@@ -52,12 +52,12 @@ pub fn build(b: *std.Build) void {
             run_cmd.addArgs(args);
         }
 
-        const run_step = b.step("examples/client", "Run example server");
+        const run_step = b.step("examples-client", "Run example server");
         run_step.dependOn(&run_cmd.step);
     }
 
     // Tests
-    const tests = b.addTest(.{ .root_source_file = .{ .path = "./src/testing.zig" }, .target = target, .optimize = optimize });
+    const tests = b.addTest(.{ .root_source_file = b.path("./src/testing.zig"), .target = target, .optimize = optimize });
     const run_tests = b.addRunArtifact(tests);
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_tests.step);

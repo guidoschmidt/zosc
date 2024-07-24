@@ -19,7 +19,7 @@ pub fn main() !void {
 
         if (i < 100) {
             const msg = osc.Message{
-                .address = "/ch/1",
+                .address = "/angle",
                 .arguments = &[_]osc.Argument{
                     .{ .f = std.math.sin(@as(f32, @floatFromInt(i)) * 0.1) * 3.0 }
                 }
@@ -28,7 +28,7 @@ pub fn main() !void {
             try client.sendMessage(msg, allocator);
         } else {
             const msg = osc.Message{
-                .address = "/ch/2",
+                .address = "/red",
                 .arguments = &[_]osc.Argument{
                     .{ .f = std.math.sin(@as(f32, @floatFromInt(i)) * 0.1) * 3.0 }
                 }

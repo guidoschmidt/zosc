@@ -7,15 +7,17 @@ const OscMessage = @import("./OscMessage.zig");
 
 const OscServer = @This();
 
-subscribers: std.StringHashMap(OscSubscriber) = undefined,
+subscribers: std.StringHashMap(*OscSubscriber) = undefined,
 
+allocator: std.mem.Allocator = undefined,
 port: u16 = 7777,
 socket: network.Socket = undefined,
 comptime buffer_size: u32 = 4096,
 active: bool = true,
 
 pub fn init(self: *OscServer, allocator: Allocator) !void {
-    self.subscribers = std.StringHashMap(OscSubscriber).init(allocator);
+    self.allocator = allocator;
+    self.subscribers = std.StringHashMap(*OscSubscriber).init(allocator);
 
     self.socket = try network.Socket.create(.ipv4, .udp);
     try self.socket.enablePortReuse(true);
@@ -28,7 +30,7 @@ pub fn init(self: *OscServer, allocator: Allocator) !void {
     };
 }
 
-pub fn subscribe(self: *OscServer, subscriber: OscSubscriber) !void {
+pub fn subscribe(self: *OscServer, subscriber: *OscSubscriber) !void {
     try self.subscribers.put(subscriber.id, subscriber);
 }
 
@@ -39,14 +41,18 @@ pub fn unsubscribe(self: *OscServer, id: []const u8) void {
 fn next(self: *OscServer, msg: *const OscMessage) void {
     var val_it = self.subscribers.valueIterator();
     while(val_it.next()) |sub| {
-        // @TODO impl. partial match or even regex, e.g. /topic1/*/velocity
-        if (std.mem.containsAtLeast(u8, msg.address, 1, sub.topic)) {
-            if (sub.*.onNextFn) |onNextFn| onNextFn(sub, msg);
+        if (sub.*.topic) |topic| {
+            // @TODO impl. partial match or even regex, e.g. /topic1/*/velocity
+            if (std.mem.containsAtLeast(u8, msg.address, 1, topic)) {
+                if (sub.*.onNextFn) |onNextFn| onNextFn(sub.*, msg);
+            }
+        } else {
+            if (sub.*.onNextFn) |onNextFn| onNextFn(sub.*, msg);
         }
     }
 }
 
-pub fn serve(self: *OscServer, allocator: Allocator) !void {
+pub fn serve(self: *OscServer) !void {
     std.log.info("\n[OscServer] Serving on port {}", .{ self.port });
 
     defer self.subscribers.deinit();
@@ -58,7 +64,7 @@ pub fn serve(self: *OscServer, allocator: Allocator) !void {
         if (!self.active) break;
         const bytes = try reader.read(buffer[0..buffer.len]);
         if (bytes > 0) {
-            const osc_msg = try OscMessage.decode(buffer[0..bytes], allocator);
+            const osc_msg = try OscMessage.decode(buffer[0..bytes], self.allocator);
             self.next(&osc_msg);
         }
     }

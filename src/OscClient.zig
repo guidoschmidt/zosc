@@ -5,6 +5,7 @@ const OscMessage = @import("./OscMessage.zig");
 
 const OscClient = @This();
 
+allocator: std.mem.Allocator,
 port: u16 = undefined,
 address: network.Address = undefined,
 socket: network.Socket = undefined,
@@ -34,9 +35,7 @@ pub fn close(self: *OscClient) void {
     self.socket.close();
 }
 
-pub fn sendMessage(self: *OscClient,
-                   osc_message: OscMessage,
-                   allocator: std.mem.Allocator) !void {
-    const buffer = try osc_message.encode(allocator);
+pub fn sendMessage(self: *OscClient, osc_message: OscMessage) !void {
+    const buffer = try osc_message.encode(self.allocator);
     _ = try self.socket.sendTo(self.send_to_endpoint, buffer);
 }

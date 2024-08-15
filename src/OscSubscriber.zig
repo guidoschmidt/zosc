@@ -1,9 +1,13 @@
 const OscMessage = @import("./OscMessage.zig");
 
-id: []const u8,
-topic: []const u8,
-onNextFn: ?*const fn(*@This(), *const OscMessage) void = undefined,
+const OscSubscriber = @This();
 
-pub fn onNext(self: *@This(), msg: *const OscMessage) void {
-    self.onNextFn.?(self, msg);
+id: []const u8,
+topic: ?[]const u8 = undefined,
+onNextFn: ?*const fn(*OscSubscriber, *const OscMessage) void = undefined,
+
+pub fn onNext(self: *OscSubscriber, msg: *const OscMessage) void {
+    if (self.onNextFn) |onNextFn| {
+        onNextFn(*@This(), msg);
+    }
 }

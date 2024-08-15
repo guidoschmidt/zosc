@@ -1,22 +1,23 @@
 const std = @import("std");
-const osc = @import("osc");
+const zosc = @import("zosc");
 
 pub const io_mode = .evented;
 
-var server: osc.Server = undefined;
+var server: zosc.Server = undefined;
 
 const ExampleSub = struct {
-    osc_subscriber: osc.Subscriber = undefined,
+    osc_subscriber: zosc.Subscriber = undefined,
 
     pub fn init(topic: []const u8) ExampleSub {
         const impl = struct {
-            pub fn onNext(ptr: *osc.Subscriber, msg: *const osc.Message) void {
+            pub fn onNext(ptr: *zosc.Subscriber, msg: *const zosc.Message) void {
                 const self: *ExampleSub = @fieldParentPtr("osc_subscriber", ptr);
                 return self.handleOscMessage(msg);
             }
         };
+
         return ExampleSub {
-            .osc_subscriber = osc.Subscriber {
+            .osc_subscriber = zosc.Subscriber {
                 .id = "unique-id",
                 .topic = topic,
                 .onNextFn = impl.onNext,
@@ -24,12 +25,12 @@ const ExampleSub = struct {
         };
     }
 
-    pub fn subscribe(self: *const ExampleSub, publisher: *osc.Server) !void {
-        try publisher.subscribe(self.osc_subscriber);
+    pub fn subscribe(self: *ExampleSub, publisher: *zosc.Server) !void {
+        try publisher.subscribe(&self.osc_subscriber);
     }
 
-    pub fn handleOscMessage(_: *ExampleSub, msg: *const osc.Message) void {
-        std.log.info("\n{any}", .{ msg });
+    pub fn handleOscMessage(self: *ExampleSub, msg: *const zosc.Message) void {
+        std.log.info("\n{any}\n    -> {any}", .{ self, msg });
     }
 };
 
@@ -38,16 +39,16 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try osc.init();
-    defer osc.deinit();
+    try zosc.init();
+    defer zosc.deinit();
 
-    server = osc.Server{
+    server = zosc.Server{
         .port = 7001,
     };
     try server.init(allocator);
 
-    const osc_sub = ExampleSub.init("/ch/1");
+    var osc_sub = ExampleSub.init("/ch/1");
     try osc_sub.subscribe(&server);
 
-    try server.serve(allocator);
+    try server.serve();
 }

@@ -1,16 +1,17 @@
 const std = @import("std");
-const osc = @import("osc");
+const zosc = @import("zosc");
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try osc.init();
-    defer osc.deinit();
+    try zosc.init();
+    defer zosc.deinit();
 
-    var client = osc.Client{
+    var client = zosc.Client{
         .port = 7001,
+        .allocator = allocator
     };
     try client.connect();
 
@@ -18,23 +19,23 @@ pub fn main() !void {
     while(i < 300) {
 
         if (i < 100) {
-            const msg = osc.Message{
-                .address = "/angle",
-                .arguments = &[_]osc.Argument{
+            const msg = zosc.Message{
+                .address = "/ch/1",
+                .arguments = &[_]zosc.Argument{
                     .{ .f = std.math.sin(@as(f32, @floatFromInt(i)) * 0.1) * 3.0 }
                 }
             };
             std.debug.print("\n{any}", .{ msg });
-            try client.sendMessage(msg, allocator);
+            try client.sendMessage(msg);
         } else {
-            const msg = osc.Message{
+            const msg = zosc.Message{
                 .address = "/red",
-                .arguments = &[_]osc.Argument{
+                .arguments = &[_]zosc.Argument{
                     .{ .f = std.math.sin(@as(f32, @floatFromInt(i)) * 0.1) * 3.0 }
                 }
             };
             std.debug.print("\n{any}", .{ msg });
-            try client.sendMessage(msg, allocator);
+            try client.sendMessage(msg);
         }
 
         i += 1;

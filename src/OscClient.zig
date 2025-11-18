@@ -33,7 +33,9 @@ pub fn close(self: *OscClient) void {
     self.socket.close();
 }
 
-pub fn sendMessage(self: *OscClient, osc_message: OscMessage) !void {
-    const buffer = try osc_message.encode(self.allocator);
+pub fn sendMessage(self: *OscClient, message: OscMessage) !void {
+    var writer: std.Io.Writer.Allocating = .init(self.allocator);
+    defer writer.deinit();
+    const buffer = try message.encode(&writer);
     _ = try self.socket.sendTo(self.send_to_endpoint, buffer);
 }

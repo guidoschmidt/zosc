@@ -12,26 +12,14 @@ pub fn main() !void {
     defer zosc.deinit();
 
     var client = zosc.Client{ .port = 8001, .allocator = allocator };
-    try client.connect(false, "127.0.0.1");
+    try client.connect(true, "0.0.0.0");
+    std.debug.print("Sending to {f}:{d}\n", .{ client.address, client.port });
 
-    const msg_count: usize = 200;
+    const msg_count: usize = 10;
     var i: usize = 0;
     var curr: i16 = -250;
-    // var rot_curr: i16 = -740;
     var zoom_curr: i16 = -740;
     while (i < msg_count) {
-        // const rot_msg = zosc.Message{ .address = "/io/0/knob/0/enc", .arguments = &[_]zosc.Argument{.{ .i = rot_curr }} };
-        // try client.sendMessage(rot_msg);
-        // rot_curr += 5;
-        // std.Thread.sleep(std.time.ns_per_ms * 30);
-
-        // const zoom_msg = zosc.Message{ .address = "/io/0/knob/1/enc", .arguments = &[_]zosc.Argument{.{ .i = zoom_curr }} };
-        // try client.sendMessage(zoom_msg);
-        // std.Thread.sleep(std.time.ns_per_ms * 30);
-
-        // const msg = zosc.Message{ .address = "/io/0/knob/2/enc", .arguments = &[_]zosc.Argument{.{ .i = curr }} };
-        // try client.sendMessage(msg);
-        // l.info("\n{any}", .{msg});
         if (i < msg_count / 2) {
             zoom_curr -= 3;
             curr += 1;
@@ -43,10 +31,10 @@ pub fn main() !void {
         const str_msg = zosc.Message{
             .address = "/two/strings",
             .arguments = &.{
+                .{ .s = "Hallo Welt!" },
+                .{ .f = 3.14 },
                 .{ .i = 42 },
                 .{ .s = "Hallo" },
-                .{ .f = 3.14 },
-                .{ .s = "Hallo Welt!" },
             },
         };
         l.info("\n{f}", .{str_msg});

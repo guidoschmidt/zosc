@@ -55,7 +55,7 @@ fn next(self: *OscServer, msg: *const OscMessage) void {
 }
 
 pub fn serve(self: *OscServer) !void {
-    l.info("\n[OscServer] Serving on port {}", .{self.port});
+    l.info("\n[OscServer] Serving on {s}:{d}", .{ "0.0.0.0", self.port });
 
     defer self.subscribers.deinit();
 

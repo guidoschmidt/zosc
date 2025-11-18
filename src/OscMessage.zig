@@ -56,32 +56,6 @@ pub fn addArguments(self: *OscMessage, arguments: []const OscArgument) void {
     self.arguments = arguments;
 }
 
-pub fn bufferSize(self: OscMessage) usize {
-    var size: usize = 0;
-    size = self.address.len + 4 - @mod(self.address.len, 4); // address
-    size += 1 + self.arguments.len + 4 - @mod(1 + self.address.len, 4);
-    for (0..self.arguments.len) |i| {
-        switch (self.arguments[i]) {
-            .i, .f => {
-                size += 1;
-                if (i < self.arguments.len - 1 and self.arguments[i + 1] == .s) {
-                    size += 1;
-                }
-            },
-            .s => {
-                const str_len = self.arguments[i].s.len + 1;
-                size += str_len;
-                if (i < self.arguments.len - 1 and self.arguments[i + 1] != .s) {
-                    size += 4 - @mod(str_len, 4);
-                }
-            },
-            else => {},
-        }
-    }
-    size += 4 - @mod(size, 4);
-    return size;
-}
-
 pub fn format(self: OscMessage, writer: *std.Io.Writer) !void {
     try writer.print("\n{s} [{d}]", .{ self.address, self.arguments.len });
     for (0..self.arguments.len) |i| {
@@ -89,113 +63,131 @@ pub fn format(self: OscMessage, writer: *std.Io.Writer) !void {
     }
 }
 
-pub fn encode(self: *const OscMessage, allocator: std.mem.Allocator) ![]u8 {
-    const buffer: []u8 = try allocator.alloc(u8, self.bufferSize());
+pub fn encode(self: OscMessage, writer: *std.Io.Writer.Allocating) ![]u8 {
+    // Address
+    try writer.writer.writeAll(self.address);
+    var len = writer.written().len;
+    try writer.writer.splatByteAll(0, 4 - @mod(len, 4));
+    try writer.writer.writeByte(',');
 
-    var stream = std.io.fixedBufferStream(buffer);
-    var writer = stream.writer();
-
-    var pos = try writer.write(self.address);
-    var skip = try std.math.mod(usize, pos, 4);
-    for (0..(4 - skip)) |_| try writer.writeByte(0);
-    try writer.writeByte(',');
-    for (self.arguments) |arg| {
-        switch (arg) {
-            .i => try writer.writeByte('i'),
-            .f => try writer.writeByte('f'),
-            .s => try writer.writeByte('s'),
-            else => {},
-        }
-    }
-    pos = stream.pos;
-    skip = try std.math.mod(usize, pos, 4);
-    for (0..(4 - skip)) |_| try writer.writeByte(0);
     for (self.arguments) |arg| {
         switch (arg) {
             .i => {
-                try writer.writeInt(i32, arg.i, .big);
+                try writer.writer.writeByte('i');
             },
             .f => {
-                try writer.writeInt(i32, @bitCast(arg.f), .big);
+                try writer.writer.writeByte('f');
             },
             .s => {
-                try writer.writeAll(arg.s);
-                const rest = 4 - @mod(arg.s.len, 4);
-                for (0..rest) |_| {
-                    try writer.writeByte(0);
-                }
+                try writer.writer.writeByte('s');
             },
             else => {},
         }
     }
-    return buffer;
+    len = writer.written().len;
+    if (4 - @mod(len, 4) < 4)
+        try writer.writer.splatByteAll(0, 4 - @mod(len, 4));
+
+    for (self.arguments) |arg| {
+        switch (arg) {
+            .i => {
+                len = writer.written().len;
+                try writer.writer.writeInt(i32, arg.i, .big);
+                len = writer.written().len;
+                if (4 - @mod(len, 4) < 4)
+                    try writer.writer.splatByteAll(0, 4 - @mod(len, 4));
+            },
+            .f => {
+                len = writer.written().len;
+                try writer.writer.writeInt(i32, @bitCast(arg.f), .big);
+                len = writer.written().len;
+                if (4 - @mod(len, 4) < 4)
+                    try writer.writer.splatByteAll(0, 4 - @mod(len, 4));
+            },
+            .s => {
+                try writer.writer.writeAll(arg.s);
+                len = writer.written().len;
+                if (4 - @mod(len, 4) < 4)
+                    try writer.writer.splatByteAll(0, 4 - @mod(len, 4));
+            },
+            else => {},
+        }
+    }
+
+    len = writer.written().len;
+    if (@mod(len, 4) != 0)
+        try writer.writer.splatByteAll(0, 4 - @mod(len, 4));
+
+    return writer.written();
 }
 
 pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !OscMessage {
-    var stream = std.io.fixedBufferStream(buffer);
-    var reader = stream.reader();
+    var argument_list: std.array_list.Managed(OscArgument) = .init(allocator);
+    defer argument_list.deinit();
 
-    const address = try reader.readUntilDelimiter(buffer, ',');
-    const eof = try stream.getEndPos();
-    var pos = try stream.getPos();
+    var fbs = std.io.fixedBufferStream(buffer);
+    var counting_reader = std.io.countingReader(fbs.reader());
 
-    var arguments = std.array_list.Managed(OscArgument).init(allocator);
-    defer arguments.deinit();
+    const stream = counting_reader.reader();
 
-    while (pos < eof) : (pos = try stream.getPos()) {
-        const type_tag = try reader.readByte();
+    const address = try stream.readUntilDelimiter(fbs.buffer, ',');
+    const eof = try fbs.getEndPos();
+    var pos: usize = 0;
+
+    while (pos < eof) : (pos = fbs.pos) {
+        const type_tag = try stream.readByte();
         switch (type_tag) {
             'f' => {
-                try arguments.append(OscArgument{
+                try argument_list.append(OscArgument{
                     .f = 0,
                 });
             },
             'i' => {
-                try arguments.append(OscArgument{
+                try argument_list.append(OscArgument{
                     .i = 0,
                 });
             },
             's' => {
-                try arguments.append(OscArgument{ .s = "" });
+                try argument_list.append(OscArgument{ .s = "" });
             },
             else => break,
         }
     }
 
-    pos = try stream.getPos();
+    pos = fbs.pos;
     const skip: usize = try std.math.mod(usize, pos, 4);
     if (skip > 0)
-        try reader.skipBytes(4 - skip, .{});
+        try stream.skipBytes(4 - skip, .{});
 
-    for (0..arguments.items.len) |i| {
-        const arg = arguments.items[i];
+    for (0..argument_list.items.len) |i| {
+        const arg = argument_list.items[i];
         switch (arg) {
             .f => {
-                const bytes = try reader.readBytesNoEof(4);
+                const bytes = try stream.readBytesNoEof(4);
                 const value = std.mem.bytesAsValue(i32, bytes[0..]);
                 const value_native = std.mem.bigToNative(i32, value.*);
                 const float_arg: f32 = @bitCast(value_native);
-                arguments.items[i].f = float_arg;
+                argument_list.items[i].f = float_arg;
             },
             .i => {
-                const int_arg = try reader.readInt(i32, .big);
-                arguments.items[i].i = int_arg;
+                const int_arg = try stream.readInt(i32, .big);
+                argument_list.items[i].i = int_arg;
             },
             .s => {
-                if (try reader.readUntilDelimiterOrEofAlloc(allocator, 0, stream.buffer.len + 1)) |str_arg| {
-                    arguments.items[i].s = str_arg;
-                    pos = try stream.getPos();
+                if (try stream.readUntilDelimiterOrEof(fbs.buffer, 0)) |s| {
+                    argument_list.items[i].s = s;
+                    pos = fbs.pos;
+                }
+                const rest = @mod(pos, 4);
+                if (rest > 0) {
+                    try stream.skipBytes(rest, .{});
                 }
             },
             else => @panic("Not yet implemented"),
         }
     }
     return OscMessage{
-        .address = try allocator.dupe(u8, address[0..]),
-        .arguments = try allocator.dupe(OscArgument, arguments.items),
+        .address = address,
+        .arguments = try allocator.dupe(OscArgument, argument_list.items),
     };
-}
-
-pub fn free(self: *const OscMessage, allocator: std.mem.Allocator) void {
-    allocator.free(self.arguments);
 }

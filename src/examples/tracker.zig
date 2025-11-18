@@ -21,7 +21,6 @@ pub fn main() !void {
     const allocator = arena.allocator();
 
     const bpm = 270;
-    _ = bpm;
 
     try zosc.init();
     defer zosc.deinit();
@@ -58,33 +57,34 @@ pub fn main() !void {
         .{ 20, null, null, 400, null, null, null, null },
     };
 
-    const buf: [32]u8 = undefined;
-    _ = buf;
-    _ = pattern_list;
+    var buf: [32]u8 = undefined;
 
     while (true) {
-        // try client.sendMessage(&.{ .address = "/ch/8", .arguments = &.{.{ .i = 1 }} });
+        try client.sendMessage(.{
+            .address = "/ch/8",
+            .arguments = &.{.{ .i = 1 }},
+        });
 
-        // std.debug.print("\x1b[2J\x1b[H", .{});
-        // for (0..pattern_list.len) |j| {
-        //     const pattern = pattern_list[j];
-        //     if (j == 0) {
-        //         for (0..pattern.len) |i| {
-        //             std.debug.print("\x1B[{d};{d}H", .{ 0, 10 * i });
-        //             std.debug.print("\x1B[31m{d: ^10}", .{i + 1});
-        //         }
-        //     }
-        //     std.debug.print("\x1B[0m", .{});
-        //     for (0..pattern.len) |i| {
-        //         if (pattern[i]) |freq| {
-        //             std.debug.print("\x1B[{d};{d}H", .{ j + 2, 10 * i });
-        //             const ch = try std.fmt.bufPrint(&buf, "/ch/{d}", .{i + 1});
-        //             const midi_note = freqToMidi(freq);
-        //             std.debug.print("{d: ^10.2}", .{midi_note});
-        //             try client.sendMessage(.{ .address = ch, .arguments = &.{.{ .f = midi_note }} });
-        //         }
-        //     }
-        //     std.Thread.sleep(std.time.ns_per_min / bpm);
-        // }
+        std.debug.print("\x1b[2J\x1b[H", .{});
+        for (0..pattern_list.len) |j| {
+            const pattern = pattern_list[j];
+            if (j == 0) {
+                for (0..pattern.len) |i| {
+                    std.debug.print("\x1B[{d};{d}H", .{ 0, 10 * i });
+                    std.debug.print("\x1B[31m{d: ^10}", .{i + 1});
+                }
+            }
+            std.debug.print("\x1B[0m", .{});
+            for (0..pattern.len) |i| {
+                if (pattern[i]) |freq| {
+                    std.debug.print("\x1B[{d};{d}H", .{ j + 2, 10 * i });
+                    const ch = try std.fmt.bufPrint(&buf, "/ch/{d}", .{i + 1});
+                    const midi_note = freqToMidi(freq);
+                    std.debug.print("{d: ^10.2}", .{midi_note});
+                    try client.sendMessage(.{ .address = ch, .arguments = &.{.{ .f = midi_note }} });
+                }
+            }
+            std.Thread.sleep(std.time.ns_per_min / bpm);
+        }
     }
 }

@@ -191,3 +191,7 @@ pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !OscMessage {
         .arguments = try allocator.dupe(OscArgument, argument_list.items),
     };
 }
+
+pub fn deinit(message: OscMessage, allocator: std.mem.Allocator) void {
+    allocator.free(message.arguments);
+}

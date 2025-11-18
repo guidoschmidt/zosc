@@ -47,6 +47,7 @@ fn next(self: *OscServer, msg: *const OscMessage) void {
             // @TODO impl. partial match or even regex, e.g. /topic1/*/velocity
             if (std.mem.containsAtLeast(u8, msg.address, 1, topic)) {
                 if (sub.*.onNextFn) |onNextFn| onNextFn(sub.*, msg);
+                defer OscMessage.deinit(msg.*, self.allocator);
             }
         } else {
             if (sub.*.onNextFn) |onNextFn| onNextFn(sub.*, msg);
@@ -65,8 +66,8 @@ pub fn serve(self: *OscServer) !void {
         if (!self.active) break;
         const len = try self.socket.receive(&buffer);
         if (len > 0) {
-            const osc_msg = try OscMessage.decode(buffer[0..len], self.allocator);
-            self.next(&osc_msg);
+            const message = try OscMessage.decode(buffer[0..len], self.allocator);
+            self.next(&message);
         }
     }
     if (!self.active) {

@@ -45,7 +45,16 @@ fn next(self: *OscServer, msg: *const OscMessage) void {
     while (val_it.next()) |sub| {
         if (sub.*.topic) |topic| {
             // @TODO impl. partial match or even regex, e.g. /topic1/*/velocity
-            if (std.mem.containsAtLeast(u8, msg.address, 1, topic)) {
+            var address_it = std.mem.tokenizeSequence(u8, topic, "/");
+            var matches: bool = true;
+            while (address_it.next()) |part| {
+                if (std.mem.eql(u8, part, "*")) {
+                    matches = true;
+                    break;
+                }
+                matches = matches and std.mem.containsAtLeast(u8, msg.address, 1, part);
+            }
+            if (matches) {
                 if (sub.*.onNextFn) |onNextFn| onNextFn(sub.*, msg);
                 defer OscMessage.deinit(msg.*, self.allocator);
             }

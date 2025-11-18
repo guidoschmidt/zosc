@@ -50,7 +50,7 @@ pub fn main() !void {
     };
     try server.init(allocator);
 
-    var osc_sub = ExampleSub.init(0, "/fader1");
+    var osc_sub = ExampleSub.init(0, "/test");
     try osc_sub.subscribe(&server);
 
     l.info("{f}", .{osc_sub});

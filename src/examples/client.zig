@@ -28,17 +28,21 @@ pub fn main() !void {
             curr -= 1;
         }
 
-        const str_msg = zosc.Message{
-            .address = "/two/strings",
+        try client.sendMessage(.{
+            .address = "/fader/1",
             .arguments = &.{
                 .{ .s = "Hallo Welt!" },
                 .{ .f = 3.14 },
                 .{ .i = 42 },
                 .{ .s = "Hallo" },
             },
-        };
-        l.info("\n{f}", .{str_msg});
-        try client.sendMessage(str_msg);
+        });
+        try client.sendMessage(.{
+            .address = "/fader/2",
+            .arguments = &.{
+                .{ .i = @intCast(i) },
+            },
+        });
 
         i += 1;
         std.Thread.sleep(std.time.ns_per_ms * 30);

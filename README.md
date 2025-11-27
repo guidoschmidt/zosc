@@ -12,12 +12,13 @@
   - [ ] OSC-blob
 
 ### Examples
-`zig build run-*example*` to run any of the [examples](src/examples/)
-
-- `zig build run-server` example server implementation for receiving OSC messages
-- `zig build run-client` example client implementation for sending OSC messages
-- `zig build run-tracker` mini tracker application which sends OSC messages to
-  VCV Rack
+All examples live in their own subfolder inside [examples](examples/).
+Building and running an example is just about:
+```
+cd examples/client
+zig build
+zig build run
+```
   
 ### Acknowledgements
 `zig-osc` wouldn't be possible without the great work on

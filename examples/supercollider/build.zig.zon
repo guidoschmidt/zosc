@@ -1,0 +1,17 @@
+.{
+    .name = .osc_example_supercollider,
+    .fingerprint = 0xdc9c5ade92d3519c,
+    .version = "0.0.2",
+    .minimum_zig_version = "0.15.2",
+    .paths = .{
+        "src",
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+    },
+    .dependencies = .{
+        .osc = .{
+            .path = "../../",
+        },
+    },
+}

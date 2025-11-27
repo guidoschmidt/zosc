@@ -12,7 +12,7 @@ pub fn main() !void {
     defer osc.deinit();
 
     var client = osc.Client{
-        .port = 8001,
+        .port = 7001,
         .allocator = allocator,
     };
     try client.connect(true, "0.0.0.0");

@@ -5,7 +5,11 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    const file = try std.fs.cwd().openFile("recording.osc", .{ .mode = .read_only });
+    const recording_filename = "recording.osc";
+    const file = std.fs.cwd().openFile(recording_filename, .{ .mode = .read_only }) catch {
+        std.log.err("{s} not found.", .{recording_filename});
+        return;
+    };
     const stats = try file.stat();
     const content = try file.readToEndAlloc(allocator, stats.size);
     std.debug.print("\n{s}", .{content});

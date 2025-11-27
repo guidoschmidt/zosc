@@ -1,5 +1,5 @@
 const std = @import("std");
-const zosc = @import("zosc");
+const osc = @import("osc");
 
 const slog = std.log.scoped(.tracker);
 
@@ -22,10 +22,10 @@ pub fn main() !void {
 
     const bpm = 270;
 
-    try zosc.init();
-    defer zosc.deinit();
+    try osc.init();
+    defer osc.deinit();
 
-    var client = zosc.Client{
+    var client = osc.Client{
         .port = 7001,
         .allocator = allocator,
     };

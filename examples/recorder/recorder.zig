@@ -17,7 +17,7 @@ const Recorder = struct {
     start_time: i64 = undefined,
     osc_subscriber: osc.Subscriber = undefined,
     recording: std.array_list.Managed(OscRecord) = undefined,
-    recording_length: u64 = 100,
+    recording_length: u64 = 10,
 
     pub fn init(allocator: std.mem.Allocator) !Recorder {
         const impl = struct {

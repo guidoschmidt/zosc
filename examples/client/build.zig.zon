@@ -1,0 +1,17 @@
+.{
+    .name = .osc_example_client,
+    .fingerprint = 0x3c29f8f20b3b18b0,
+    .version = "0.0.2",
+    .minimum_zig_version = "0.15.2",
+    .paths = .{
+        "src",
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+    },
+    .dependencies = .{
+        .osc = .{
+            .path = "../../",
+        },
+    },
+}

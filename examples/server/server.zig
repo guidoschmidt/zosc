@@ -1,35 +1,35 @@
 const std = @import("std");
-const zosc = @import("zosc");
+const osc = @import("osc");
 
-const l = std.log.scoped(.@"zosc-example-server");
+const l = std.log.scoped(.@"osc-example-server");
 pub const io_mode = .evented;
 
-var server: zosc.Server = undefined;
+var server: osc.Server = undefined;
 
 const ExampleSub = struct {
-    osc_subscriber: zosc.Subscriber = undefined,
+    osc_subscriber: osc.Subscriber = undefined,
 
     pub fn init(id: usize, topic: []const u8) ExampleSub {
         const impl = struct {
-            pub fn onNext(ptr: *zosc.Subscriber, msg: *const zosc.Message) void {
+            pub fn onNext(ptr: *osc.Subscriber, msg: *const osc.Message) void {
                 const self: *ExampleSub = @fieldParentPtr("osc_subscriber", ptr);
                 return self.handleOscMessage(msg);
             }
         };
 
-        return ExampleSub{ .osc_subscriber = zosc.Subscriber{
+        return ExampleSub{ .osc_subscriber = osc.Subscriber{
             .id = id,
             .topic = topic,
             .onNextFn = impl.onNext,
         } };
     }
 
-    pub fn subscribe(self: *ExampleSub, publisher: *zosc.Server) !void {
+    pub fn subscribe(self: *ExampleSub, publisher: *osc.Server) !void {
         try publisher.subscribe(&self.osc_subscriber);
     }
 
-    pub fn handleOscMessage(self: *ExampleSub, msg: *const zosc.Message) void {
-        l.info("\n{f}\n{f}\n", .{ self, msg });
+    pub fn handleOscMessage(self: *ExampleSub, msg: *const osc.Message) void {
+        l.info("\n{f}\n>>>> {f}\n", .{ self, msg });
     }
 
     pub fn format(self: ExampleSub, writer: *std.Io.Writer) std.Io.Writer.Error!void {
@@ -42,15 +42,15 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try zosc.init();
-    defer zosc.deinit();
+    try osc.init();
+    defer osc.deinit();
 
-    server = zosc.Server{
+    server = osc.Server{
         .port = 8001,
     };
     try server.init(allocator);
 
-    var osc_sub = ExampleSub.init(0, "/test");
+    var osc_sub = ExampleSub.init(0, "/*");
     try osc_sub.subscribe(&server);
 
     l.info("{f}", .{osc_sub});

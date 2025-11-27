@@ -1,5 +1,5 @@
 const std = @import("std");
-const osc = @import("./lib.zig");
+const osc = @import("./root.zig");
 
 const testing = std.testing;
 var allocator = testing.allocator;

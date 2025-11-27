@@ -75,6 +75,9 @@ pub fn serve(self: *OscServer) !void {
         if (!self.active) break;
         const len = try self.socket.receive(&buffer);
         if (len > 0) {
+            for (buffer[0..len]) |c| {
+                std.debug.print("{x} - {c}\n", .{ c, c });
+            }
             const message = try OscMessage.decode(buffer[0..len], self.allocator);
             self.next(&message);
         }

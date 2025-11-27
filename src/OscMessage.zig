@@ -28,6 +28,10 @@ pub const OscArgument = union(OscArgumentType) {
         self.i = i;
     }
 
+    pub fn setBool(self: *OscArgument, b: bool) void {
+        self.b = b;
+    }
+
     pub fn setBlob(self: *OscArgument) void {
         _ = self;
         @panic("Not yet implemented");
@@ -41,7 +45,7 @@ pub const OscArgument = union(OscArgumentType) {
         switch (self) {
             .f => |s| try writer.print("f {d:.3}", .{s}),
             .i => |s| try writer.print("i {d}", .{s}),
-            .b => |s| try writer.print("b {any}", .{s}),
+            .b => |s| try writer.print("b {s}", .{if (s) "true" else "false"}),
             .s => |s| try writer.print("s {s}", .{s}),
         }
     }
@@ -72,16 +76,11 @@ pub fn encode(self: OscMessage, writer: *std.Io.Writer.Allocating) ![]u8 {
 
     for (self.arguments) |arg| {
         switch (arg) {
-            .i => {
-                try writer.writer.writeByte('i');
-            },
-            .f => {
-                try writer.writer.writeByte('f');
-            },
-            .s => {
-                try writer.writer.writeByte('s');
-            },
-            else => {},
+            .i => try writer.writer.writeByte('i'),
+            .f => try writer.writer.writeByte('f'),
+            .s => try writer.writer.writeByte('s'),
+            .b => try writer.writer.writeByte('b'),
+            // else => {},
         }
     }
     len = writer.written().len;
@@ -110,7 +109,13 @@ pub fn encode(self: OscMessage, writer: *std.Io.Writer.Allocating) ![]u8 {
                 if (4 - @mod(len, 4) < 4)
                     try writer.writer.splatByteAll(0, 4 - @mod(len, 4));
             },
-            else => {},
+            .b => {
+                // try writer.writer.writeAll(arg.b);
+                // len = writer.written().len;
+                // if (4 - @mod(len, 4) < 4)
+                //     try writer.writer.splatByteAll(0, 4 - @mod(len, 4));
+            },
+            // else => {},
         }
     }
 
@@ -130,7 +135,8 @@ pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !OscMessage {
 
     const stream = counting_reader.reader();
 
-    const address = try stream.readUntilDelimiter(fbs.buffer, ',');
+    const address_from_stream = try stream.readUntilDelimiter(fbs.buffer, ',');
+    const addr = try allocator.dupe(u8, address_from_stream);
     const eof = try fbs.getEndPos();
     var pos: usize = 0;
 
@@ -149,6 +155,9 @@ pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !OscMessage {
             },
             's' => {
                 try argument_list.append(OscArgument{ .s = "" });
+            },
+            'b' => {
+                try argument_list.append(OscArgument{ .b = false });
             },
             else => break,
         }
@@ -173,6 +182,10 @@ pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !OscMessage {
                 const int_arg = try stream.readInt(i32, .big);
                 argument_list.items[i].i = int_arg;
             },
+            .b => {
+                const int_arg = try stream.readInt(i32, .big);
+                argument_list.items[i].b = if (int_arg == 0) false else true;
+            },
             .s => {
                 if (try stream.readUntilDelimiterOrEof(fbs.buffer, 0)) |s| {
                     argument_list.items[i].s = s;
@@ -183,15 +196,18 @@ pub fn decode(buffer: []u8, allocator: std.mem.Allocator) !OscMessage {
                     try stream.skipBytes(rest, .{});
                 }
             },
-            else => @panic("Not yet implemented"),
         }
     }
+    const final_arguments = try allocator.dupe(OscArgument, argument_list.items);
+    errdefer allocator.free(addr);
+    errdefer allocator.free(final_arguments);
     return OscMessage{
-        .address = address,
-        .arguments = try allocator.dupe(OscArgument, argument_list.items),
+        .address = addr,
+        .arguments = final_arguments,
     };
 }
 
 pub fn deinit(message: OscMessage, allocator: std.mem.Allocator) void {
+    allocator.free(message.address);
     allocator.free(message.arguments);
 }

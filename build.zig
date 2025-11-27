@@ -1,6 +1,13 @@
 const std = @import("std");
 
-fn createExample(b: *std.Build, target: *const std.Build.ResolvedTarget, optimize: *const std.builtin.OptimizeMode, name: []const u8, src: []const u8, zosc_module: *std.Build.Module) void {
+fn createExample(
+    b: *std.Build,
+    target: *const std.Build.ResolvedTarget,
+    optimize: *const std.builtin.OptimizeMode,
+    name: []const u8,
+    src: []const u8,
+    osc_module: *std.Build.Module,
+) void {
     const exe = b.addExecutable(.{
         .name = name,
         .root_module = b.createModule(.{
@@ -10,7 +17,7 @@ fn createExample(b: *std.Build, target: *const std.Build.ResolvedTarget, optimiz
         }),
     });
 
-    exe.root_module.addImport("zosc", zosc_module);
+    exe.root_module.addImport("osc", osc_module);
 
     b.installArtifact(exe);
     const run_cmd = b.addRunArtifact(exe);
@@ -27,34 +34,33 @@ fn createExample(b: *std.Build, target: *const std.Build.ResolvedTarget, optimiz
 }
 
 pub fn build(b: *std.Build) !void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{
+        .preferred_optimize_mode = .ReleaseFast,
+    });
+
     const network_module = b.dependency("network", .{}).module("network");
 
-    const zosc_module = b.addModule("zosc", .{
-        .root_source_file = b.path("src/lib.zig"),
+    _ = b.addModule("osc", .{
+        .root_source_file = b.path("src/root.zig"),
         .imports = &.{
             .{ .name = "network", .module = network_module },
         },
     });
 
     // Examples
-    const target = b.standardTargetOptions(.{});
+    // var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    // const allocator = gpa.allocator();
 
-    const optimize = b.standardOptimizeOption(.{
-        .preferred_optimize_mode = .ReleaseFast,
-    });
-
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-
-    const examples_path = try std.fs.path.join(allocator, &.{ "src", "examples" });
-    defer allocator.free(examples_path);
-    const examples_dir = try std.fs.cwd().openDir(examples_path, .{ .iterate = true });
-    var examples_it = examples_dir.iterate();
-    while (try examples_it.next()) |file| {
-        const example_name = try std.mem.replaceOwned(u8, allocator, file.name, ".zig", "");
-        const example_path = try std.fs.path.joinZ(allocator, &.{ examples_path, file.name });
-        createExample(b, &target, &optimize, example_name, example_path, zosc_module);
-    }
+    // const examples_path = try std.fs.path.join(allocator, &.{"examples"});
+    // defer allocator.free(examples_path);
+    // const examples_dir = try std.fs.cwd().openDir(examples_path, .{ .iterate = true });
+    // var examples_it = examples_dir.iterate();
+    // while (try examples_it.next()) |file| {
+    //     const example_name = try std.mem.replaceOwned(u8, allocator, file.name, ".zig", "");
+    //     const example_path = try std.fs.path.joinZ(allocator, &.{ examples_path, file.name });
+    //     createExample(b, &target, &optimize, example_name, example_path, zosc_module);
+    // }
 
     // Tests
     const tests = b.addTest(.{

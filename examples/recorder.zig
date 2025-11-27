@@ -1,12 +1,12 @@
 const std = @import("std");
-const zosc = @import("zosc");
+const osc = @import("osc");
 
-var server: zosc.Server = undefined;
+var server: osc.Server = undefined;
 
 const OscRecord = struct {
     time: i64,
     address: []const u8,
-    args: []const zosc.Argument,
+    args: []const osc.Argument,
 
     pub fn format(self: OscRecord, comptime _: []const u8, _: std.fmt.FormatOptions, writer: anytype) !void {
         try writer.print("{d}, {any}, {any}", .{ self.time, self.address, self.args });
@@ -15,13 +15,13 @@ const OscRecord = struct {
 
 const Recorder = struct {
     start_time: i64 = undefined,
-    osc_subscriber: zosc.Subscriber = undefined,
+    osc_subscriber: osc.Subscriber = undefined,
     recording: std.array_list.Managed(OscRecord) = undefined,
     recording_length: u64 = 100,
 
     pub fn init(allocator: std.mem.Allocator) !Recorder {
         const impl = struct {
-            pub fn onNext(ptr: *zosc.Subscriber, msg: *const zosc.Message) void {
+            pub fn onNext(ptr: *osc.Subscriber, msg: *const osc.Message) void {
                 const self: *Recorder = @fieldParentPtr("osc_subscriber", ptr);
                 return self.recordOscMessage(msg);
             }
@@ -29,7 +29,7 @@ const Recorder = struct {
 
         const instance = Recorder{
             .recording = std.array_list.Managed(OscRecord).init(allocator),
-            .osc_subscriber = zosc.Subscriber{
+            .osc_subscriber = osc.Subscriber{
                 .id = 0,
                 .onNextFn = impl.onNext,
             },
@@ -37,7 +37,7 @@ const Recorder = struct {
         return instance;
     }
 
-    pub fn recordOscMessage(self: *Recorder, msg: *const zosc.Message) void {
+    pub fn recordOscMessage(self: *Recorder, msg: *const osc.Message) void {
         self.recording.append(OscRecord{
             .time = std.time.timestamp(),
             .address = msg.address,
@@ -74,10 +74,10 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try zosc.init();
-    defer zosc.deinit();
+    try osc.init();
+    defer osc.deinit();
 
-    server = zosc.Server{
+    server = osc.Server{
         .port = 7001,
     };
     try server.init(allocator);

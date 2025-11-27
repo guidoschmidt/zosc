@@ -1,5 +1,5 @@
 const std = @import("std");
-const zosc = @import("zosc");
+const osc = @import("osc");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -10,10 +10,10 @@ pub fn main() !void {
     const content = try file.readToEndAlloc(allocator, stats.size);
     std.debug.print("\n{s}", .{content});
 
-    try zosc.init();
-    defer zosc.deinit();
+    try osc.init();
+    defer osc.deinit();
 
-    var client = zosc.Client{
+    var client = osc.Client{
         .port = 7001,
         .allocator = allocator,
     };
